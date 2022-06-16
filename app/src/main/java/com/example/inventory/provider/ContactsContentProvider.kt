@@ -5,6 +5,7 @@ import android.database.Cursor
 import android.net.Uri
 import android.util.Log
 import com.example.inventory.data.Item
+import com.example.inventory.data.ItemDao
 import com.example.inventory.data.ItemRoomDatabase
 
 
@@ -14,18 +15,18 @@ class ContactsContentProvider : ContentProvider() {
     // private lateinit var itemRoomDatabase: ItemRoomDatabase
 
     // Defines a DAO to perform the database operations
-    // private lateinit var itemDao: ItemDao
+    private lateinit var itemDao: ItemDao
 
     // Things in "companion object" are literally "static type" (全域，跨 class)
     companion object {
 
         /* defining Content URI */
         const val AUTHORITY = "com.example.inventory"
-        const val DB_NAME = "item"
+        const val DB_TABLE_NAME = "item"
 
         /* the result will be "content://com.example.inventory/item"
         *  so we are pointing at contents in table which name is "item" */
-        private const val URL = "content://$AUTHORITY/$DB_NAME"
+        private const val URL = "content://$AUTHORITY"
         val CONTENT_URI: Uri = Uri.parse(URL)
 
         /* declaring all column names and values */
@@ -46,8 +47,8 @@ class ContactsContentProvider : ContentProvider() {
     }
 
     init {
-        uriMatcher.addURI(AUTHORITY, DB_NAME, ITEMS_TABLE)
-        uriMatcher.addURI(AUTHORITY, "$DB_NAME/#", ITEMS_TABLE_ROW)
+        uriMatcher.addURI(AUTHORITY, DB_TABLE_NAME, ITEMS_TABLE)
+        uriMatcher.addURI(AUTHORITY, "$DB_TABLE_NAME/#", ITEMS_TABLE_ROW)
         // equals: uriMatcher.addURI(AUTHORITY, DB_NAME + "/#", ITEMS_TABLE_ROW)
     }
 
@@ -57,7 +58,7 @@ class ContactsContentProvider : ContentProvider() {
         return true
     }
 
-    override fun insert(uri: Uri, contentValues: ContentValues?): Uri? {
+    override fun insert(uri: Uri, contentValues: ContentValues?): Uri? =
 
         /* This method now needs to be modified to perform the following tasks:
         * Use the sUriMatcher object to identify the URI type.
@@ -68,21 +69,20 @@ class ContactsContentProvider : ContentProvider() {
         * Return the URI of the newly added table row.
         * */
 
-        if (context != null) {
-
-            // use the companion object defined in Item.kt
-            val id: Long = ItemRoomDatabase.getDatabase(context!!).itemDao()
-                .insertRow(Item.fromContentValues(contentValues!!))
-            Log.d("TAG", "ContentProvider Inserted result: $id ")
-            if (id != 0L) {
-                context!!.contentResolver.notifyChange(uri, null)
-                return ContentUris.withAppendedId(uri, id)
+        context?.let {
+            when( uriMatcher.match(uri)) {
+                ITEMS_TABLE -> {
+                    val id = itemDao.insertRow(Item.fromContentValues(contentValues!!))
+                    it.contentResolver.notifyChange(uri, null)
+                    return@let ContentUris.withAppendedId(uri, id)
+                }
+                ITEMS_TABLE_ROW ->
+                    throw IllegalArgumentException("Invalid Uri, can not insert with row ID: $uri")
+                else -> throw IllegalArgumentException("Unknown Uri: $uri")
             }
         }
+        //throw IllegalArgumentException("Failed to insert row into $uri")
 
-        throw IllegalArgumentException("Failed to insert row into $uri")
-
-        // 要透過 itemDao 對資料庫做新增
         /*context.let {
             when (uriMatcher.match(uri)) {
                 ITEMS -> {
@@ -94,7 +94,19 @@ class ContactsContentProvider : ContentProvider() {
                 else -> throw IllegalArgumentException("Unknown Uri: $uri")
             }
         }*/
-    }
+
+        /*if (context != null) {
+
+            // use the companion object defined in Item.kt
+            val id: Long = ItemRoomDatabase.getDatabase(context!!).itemDao()
+                .insertRow(Item.fromContentValues(contentValues!!))
+            Log.d("TAG", "ContentProvider Inserted result: $id ")
+            if (id != 0L) {
+                context!!.contentResolver.notifyChange(uri, null)
+                return ContentUris.withAppendedId(uri, id)
+            }
+        }*/
+
 
     override fun delete(uri: Uri, selection: String?, selectionArgs: Array<out String>?): Int {
 
