@@ -1,5 +1,6 @@
 package com.example.inventory.data
 
+import android.database.Cursor
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow
 
@@ -39,4 +40,22 @@ interface ItemDao {
     //1 is "TRUE"
     @Query("SELECT * from item WHERE vocFavorite=1")
     fun getFavoriteItems(): Flow<List<Item>>
+
+    /* ------------------------------------------------- */
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    fun insertRow(item: Item): Long
+
+    /*@Query("DELETE FROM item")
+    fun deleteAll(): Int*/
+
+    @Query("DELETE FROM item WHERE id = :id")
+    fun deleteRowById(id: Long): Int
+
+    @Update
+    fun updateee(item: Item): Int
+
+    @Query("SELECT * FROM item WHERE id = :id")
+    fun getItemsById(id: Long): Cursor
+
 }

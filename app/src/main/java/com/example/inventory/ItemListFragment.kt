@@ -40,6 +40,7 @@ class ItemListFragment : Fragment() {
 
     private var _binding: ItemListFragmentBinding? = null
     private val binding get() = _binding!!
+
     // where you inflate the layout. The fragment has entered the CREATED state
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -50,11 +51,11 @@ class ItemListFragment : Fragment() {
         _binding = ItemListFragmentBinding.inflate(inflater, container, false)
         setHasOptionsMenu(true)
 
-        //        val image = findViewById<View>(R.id.i) as ImageView
+//        val image = findViewById<View>(R.id.i) as ImageView
 //        val bMap = BitmapFactory.decodeResource(context?.resources, R.drawable.img_20220227_113828)
 //        image.setImageBitmap(bMap)
-        //default time zone
-        //default time zone
+// default time zone
+// default time zone
 //        val date: Date = Date()
 //        val formatter: SimpleDateFormat = SimpleDateFormat("dd-MM-yyyy HH:mm:ss")
 //        Log.d("Date",formatter.format(date))

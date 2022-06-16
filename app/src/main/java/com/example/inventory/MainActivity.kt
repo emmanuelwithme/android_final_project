@@ -26,6 +26,17 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
 
     private lateinit var navController: NavController
 
+    companion object {
+        var ITEM_ID = "id"
+        var ITEM_ENGLISH = "vocEnglish"
+        var ITEM_CHINESE = "vocChinese"
+        var ITEM_FAVORITE = "vocFavorite"
+        var ITEM_BIRTHDAY = "birthday"
+        var ITEM_PHONE = "phone"
+        var ITEM_EMAIL = "email"
+        var ITEM_PHOTO = "photo"
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
