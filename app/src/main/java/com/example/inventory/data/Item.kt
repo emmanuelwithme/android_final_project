@@ -2,6 +2,7 @@ package com.example.inventory.data
 
 import android.content.ContentValues
 import android.net.Uri
+import androidx.core.net.toUri
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
@@ -47,7 +48,7 @@ data class Item(
         fun fromContentValues(contentValues: ContentValues): Item {
 
             val dateString = "2000.02.02"
-            val formatter = SimpleDateFormat("yyyy-MM-dd")
+            val formatter = SimpleDateFormat("yyyy.MM.dd",Locale.TAIWAN)
             val date = formatter.parse(dateString)
             val emptyUri = Uri.EMPTY
 
@@ -68,7 +69,7 @@ data class Item(
             }
             if (contentValues.containsKey(ITEM_BIRTHDAY)) {
                 val birthdayString = contentValues.getAsString(ITEM_BIRTHDAY)
-                val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.TAIWAN)
+                val formatter = SimpleDateFormat("yyyy.MM.dd", Locale.TAIWAN)
                 // Found: "Date?", Required: Date
                 item.birthday = formatter.parse(birthdayString)!!
             }
@@ -80,7 +81,7 @@ data class Item(
             }
             if (contentValues.containsKey(ITEM_PHOTO)) {
                 val stringPhoto = contentValues.getAsString(ITEM_PHOTO)
-                item.photo = Uri.parse(stringPhoto)
+                item.photo = stringPhoto.toUri()
             }
             return item
         }
