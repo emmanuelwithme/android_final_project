@@ -17,12 +17,18 @@ package com.example.inventory
 
 import android.Manifest
 import android.app.Activity.RESULT_OK
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
 import android.content.Context.INPUT_METHOD_SERVICE
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.database.Cursor
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
@@ -33,6 +39,8 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
@@ -60,7 +68,8 @@ class AddItemFragment : Fragment() {
     lateinit var item: Item
 
     // what is this for? by?
-    private val navigationArgs: ItemDetailFragmentArgs by navArgs()
+    private val navigationArgs: AddItemFragmentArgs by navArgs()
+
 
     // Binding object instance corresponding to the fragment_add_item.xml layout
     // This property is non-null between the onCreateView() and onDestroyView() lifecycle callbacks,
@@ -84,6 +93,8 @@ class AddItemFragment : Fragment() {
             Log.d("Permission", "Denied")
         }
     }
+    private val CHANNEL_ID = "Coder"
+
 
     // where you inflate the layout. The fragment has entered the CREATED state.
     override fun onCreateView(
@@ -196,6 +207,40 @@ class AddItemFragment : Fragment() {
                 binding.imageUri.text.toString().toUri()
             )
 
+
+            var bitmap = BitmapFactory.decodeFile(binding.imageUri.text.toString().toUri().path)
+            bitmap = Bitmap.createScaledBitmap(bitmap!!, 100, 100, true)
+            // Create an explicit intent for an Activity in your app
+            val intent = Intent(requireContext(), MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
+            createNotificationChannel()
+            val pendingIntent: PendingIntent =
+                PendingIntent.getActivity(requireContext(), 0, intent, PendingIntent.FLAG_IMMUTABLE)
+
+            val builder = NotificationCompat.Builder(requireContext(), CHANNEL_ID)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle(getString(R.string.app_name))
+                .setContentText(binding.vocChinese.text.toString())
+                .setLargeIcon(bitmap)
+                .setStyle(
+                    NotificationCompat.BigPictureStyle()
+                        .bigPicture(bitmap)
+                        .bigLargeIcon(null)
+                )
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                // Set the intent that will fire when the user taps the notification
+                .setContentIntent(pendingIntent)
+                // setAutoCancel(true) will let notification disappear after click it
+                .setAutoCancel(false)
+            //Vibration
+            builder.setVibrate(longArrayOf(1000, 1000, 1000, 1000, 1000))
+            with(NotificationManagerCompat.from(requireContext())) {
+                // TODO:
+                // notificationId is a unique int for each notification that you must define
+                notify(1, builder.build())
+            }
+
             // and move fragment from add item to list item
             // create a action variable first, then use the method on the second line
             val action = AddItemFragmentDirections.actionAddItemFragmentToItemListFragment()
@@ -211,6 +256,7 @@ class AddItemFragment : Fragment() {
             email.setText(item.email, TextView.BufferType.SPANNABLE)
             val dateFormat: DateFormat = SimpleDateFormat("yyyy.MM.dd", Locale.TAIWAN)
             date.setText(dateFormat.format(item.birthday), TextView.BufferType.SPANNABLE)
+            imageUri.setText(item.photo.toString())
             image.setImageURI(item.photo)
             saveAction.setOnClickListener { updateItem() }
         }
@@ -244,5 +290,22 @@ class AddItemFragment : Fragment() {
                 InputMethodManager
         inputMethodManager.hideSoftInputFromWindow(requireActivity().currentFocus?.windowToken, 0)
         _binding = null
+    }
+
+    private fun createNotificationChannel() {
+        // Create the NotificationChannel, but only on API 26+ because
+        // the NotificationChannel class is new and not in the support library
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val name = getString(R.string.channel_name)
+            val descriptionText = getString(R.string.channel_description)
+            val importance = NotificationManager.IMPORTANCE_DEFAULT
+            val channel = NotificationChannel(CHANNEL_ID, name, importance).apply {
+                description = descriptionText
+            }
+            // Register the channel with the system
+            val notificationManager: NotificationManager =
+                activity?.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(channel)
+        }
     }
 }
