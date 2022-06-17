@@ -74,6 +74,7 @@ class ContactsContentProvider : ContentProvider() {
                     it.contentResolver.notifyChange(uri, null)
                     val contentUrisWithAppendedId = ContentUris.withAppendedId(uri, id)
                     Log.w("TAG", "Result of withAppendedId is: $contentUrisWithAppendedId")
+                    print(contentValues)
                     return@let contentUrisWithAppendedId
                 }
                 ITEMS_TABLE_ROW ->
@@ -107,7 +108,8 @@ class ContactsContentProvider : ContentProvider() {
 
     override fun delete(uri: Uri, selection: String?, selectionArgs: Array<out String>?): Int =
         if (context != null) {
-            when (uriMatcher.match(uri)) {
+            itemDao.deleteAll()
+            /*when (uriMatcher.match(uri)) {
                 ITEMS_TABLE -> itemDao.deleteAll()
                 ITEMS_TABLE_ROW -> {
                     val count = itemDao.deleteRowById(ContentUris.parseId(uri))
@@ -115,7 +117,8 @@ class ContactsContentProvider : ContentProvider() {
                     count
                 }
                 else -> throw IllegalArgumentException("Failed to delete row into $uri")
-            }
+            }*/
+            1
         } else {
             0
         }
