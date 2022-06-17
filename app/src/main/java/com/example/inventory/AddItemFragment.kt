@@ -43,6 +43,7 @@ import com.example.inventory.data.Item
 import com.example.inventory.databinding.FragmentAddItemBinding
 import java.text.DateFormat
 import java.text.SimpleDateFormat
+import java.util.*
 
 
 /**
@@ -170,8 +171,7 @@ class AddItemFragment : Fragment() {
 
     // return false if one of these two strings is empty
     private fun isEntryValid(): Boolean {
-        // TODO: 須改
-        val dateFormat: DateFormat = SimpleDateFormat("yyyy.MM.dd")
+        val dateFormat: DateFormat = SimpleDateFormat("yyyy.MM.dd", Locale.TAIWAN)
         return viewModel.isEntryValid(
             binding.vocEnglish.text.toString(),
             binding.vocChinese.text.toString(),
@@ -186,8 +186,7 @@ class AddItemFragment : Fragment() {
     private fun addNewItem() {
         // if this is true, insert item to db table
         if (isEntryValid()) {
-            // TODO: 須改
-            val dateFormat: DateFormat = SimpleDateFormat("yyyy.MM.dd")
+            val dateFormat: DateFormat = SimpleDateFormat("yyyy.MM.dd", Locale.TAIWAN)
             viewModel.addNewItem(
                 binding.vocEnglish.text.toString(),
                 binding.vocChinese.text.toString(),
@@ -210,7 +209,7 @@ class AddItemFragment : Fragment() {
             vocChinese.setText(item.vocChinese, TextView.BufferType.SPANNABLE)
             phone.setText(item.phone, TextView.BufferType.SPANNABLE)
             email.setText(item.email, TextView.BufferType.SPANNABLE)
-            val dateFormat: DateFormat = SimpleDateFormat("yyyy.MM.dd")
+            val dateFormat: DateFormat = SimpleDateFormat("yyyy.MM.dd", Locale.TAIWAN)
             date.setText(dateFormat.format(item.birthday), TextView.BufferType.SPANNABLE)
             image.setImageURI(item.photo)
             saveAction.setOnClickListener { updateItem() }
@@ -219,7 +218,7 @@ class AddItemFragment : Fragment() {
 
     private fun updateItem() {
         if (isEntryValid()) {
-            val dateFormat: DateFormat = SimpleDateFormat("yyyy.MM.dd")
+            val dateFormat: DateFormat = SimpleDateFormat("yyyy.MM.dd", Locale.TAIWAN)
             viewModel.updateItem(
                 this.navigationArgs.itemId,
                 this.binding.vocEnglish.text.toString(),

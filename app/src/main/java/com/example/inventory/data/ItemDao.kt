@@ -37,6 +37,9 @@ interface ItemDao {
     @Query("SELECT * from item ORDER BY vocEnglish ASC")
     fun getItems(): Flow<List<Item>>
 
+    @Query("SELECT * FROM item ")
+    fun getAllItem(): Cursor?
+
     //1 is "TRUE"
     @Query("SELECT * from item WHERE vocFavorite=1")
     fun getFavoriteItems(): Flow<List<Item>>
@@ -52,10 +55,12 @@ interface ItemDao {
     @Query("DELETE FROM item WHERE id = :id")
     fun deleteRowById(id: Long): Int
 
+    @Query(value = "DELETE FROM item")
+    fun deleteAll(): Int
+
     @Update
     fun updateee(item: Item): Int
 
     @Query("SELECT * FROM item WHERE id = :id")
     fun getItemsById(id: Long): Cursor
-
 }

@@ -16,15 +16,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.inventory">
 
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.INTERNET" />
+
 
     <!--define read, write permissions-->
-    <!--controls access for querying the content provider -->
-    <permission android:name="android.permission.permissionRead"/>
+    <!--controls access for querying the ContentProvider -->
+    <permission android:name="com.example.inventory.permissionRead"/>
     <!--controls access for modifying the provider's data -->
-    <permission android:name="android.permission.permissionWrite"/>
+    <permission android:name="com.example.inventory.permissionWrite"/>
 
     <application
         android:name="com.example.inventory.InventoryApplication"
@@ -45,13 +46,13 @@
         </activity>
 
         <provider
+            android:authorities="com.example.inventory"
             android:name=".provider.ContactsContentProvider"
-            android:authorities="com.example.inventory.provider"
             android:enabled="true"
             android:exported="true"
             android:grantUriPermissions="true"
-            android:readPermission="android.permission.permissionRead"
-            android:writePermission="android.permission.permissionWrite">
+            android:readPermission="com.example.inventory.permissionRead"
+            android:writePermission="com.example.inventory.permissionWrite">
         </provider>
 
     </application>

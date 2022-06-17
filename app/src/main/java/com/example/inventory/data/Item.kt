@@ -47,12 +47,14 @@ data class Item(
         fun fromContentValues(contentValues: ContentValues): Item {
 
             val dateString = "2000.02.02"
-            val formatter = SimpleDateFormat("yyyy-MM-dd")
+            val formatter = SimpleDateFormat("yyyy.MM.dd", Locale.TAIWAN)
             val date = formatter.parse(dateString)
             val emptyUri = Uri.EMPTY
 
-            val item = Item(0,"item1-eng", "item1-cn", false,
-                date!!, "0988222222", "qwe124@gmail.com", emptyUri)
+            val item = Item(
+                0, "item1-eng", "item1-cn", false,
+                date!!, "0988222222", "qwe124@gmail.com", emptyUri
+            )
 
             if (contentValues.containsKey(ITEM_ID)) {
                 item.id = contentValues.getAsInteger(ITEM_ID)
@@ -68,8 +70,7 @@ data class Item(
             }
             if (contentValues.containsKey(ITEM_BIRTHDAY)) {
                 val birthdayString = contentValues.getAsString(ITEM_BIRTHDAY)
-                val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.TAIWAN)
-                // Found: "Date?", Required: Date
+                val formatter = SimpleDateFormat("yyyy.MM.dd", Locale.TAIWAN)
                 item.birthday = formatter.parse(birthdayString)!!
             }
             if (contentValues.containsKey(ITEM_PHONE)) {

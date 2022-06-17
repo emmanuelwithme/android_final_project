@@ -20,80 +20,74 @@ class ContactsContentProvider : ContentProvider() {
     // Things in "companion object" are literally "static type" (全域，跨 class)
     companion object {
 
-        /* defining Content URI */
+        val uriMatcher = UriMatcher(UriMatcher.NO_MATCH)
+
+        // defining Content URI
         const val AUTHORITY = "com.example.inventory"
-        const val DB_TABLE_NAME = "item"
 
         /* the result will be "content://com.example.inventory/item"
         *  so we are pointing at contents in table which name is "item" */
-        private const val URL = "content://$AUTHORITY"
-        val CONTENT_URI: Uri = Uri.parse(URL)
-
-        /* declaring all column names and values */
-        /*val ID = "_id"
-        const val vocEnglish = "vocEnglish"
-        const val vocChinese = "vocChinese"
-        const val vocFavorite = "vocFavorite"
-        const val birthday = "birthday"
-        const val email = "email"
-        const val phone = "phone"*/
+        const val URL = "content://$AUTHORITY"
+        val BASE_CONTENT_URI: Uri = Uri.parse(URL)
+        const val DB_TABLE_NAME = "item"
+        val CONTENT_URI: Uri = Uri.withAppendedPath(BASE_CONTENT_URI, DB_TABLE_NAME)
 
         // for URIMatcher's return value to reference:
         // 1 is for the entire item table
         // 2 is for a id of a specific row in the item table
         const val ITEMS_TABLE = 1
         const val ITEMS_TABLE_ROW = 2
-        val uriMatcher = UriMatcher(UriMatcher.NO_MATCH)
+
+        /* declaring all column names and values */
+        val ID = "_id"
+        const val vocEnglish = "vocEnglish"
+        const val vocChinese = "vocChinese"
+        const val vocFavorite = "vocFavorite"
+        const val birthday = "birthday"
+        const val email = "email"
+        const val phone = "phone"
     }
 
     init {
         uriMatcher.addURI(AUTHORITY, DB_TABLE_NAME, ITEMS_TABLE)
-        uriMatcher.addURI(AUTHORITY, "$DB_TABLE_NAME/#", ITEMS_TABLE_ROW)
-        // equals: uriMatcher.addURI(AUTHORITY, DB_NAME + "/#", ITEMS_TABLE_ROW)
+        uriMatcher.addURI(AUTHORITY, "$DB_TABLE_NAME/*", ITEMS_TABLE_ROW)
+        // equals: uriMatcher.addURI(AUTHORITY, DB_NAME + "/*", ITEMS_TABLE_ROW)
     }
 
     // initialize CP, don't include lengthy operations!
     override fun onCreate(): Boolean {
         Log.d("TAG", (context == null).toString() + ", onCreate")
+        context
+        val appDatabase = ItemRoomDatabase.getDatabase(context!!)
+        itemDao = appDatabase.itemDao()
         return true
     }
 
     override fun insert(uri: Uri, contentValues: ContentValues?): Uri? =
-
-        /* This method now needs to be modified to perform the following tasks:
-        * Use the sUriMatcher object to identify the URI type.
-        * Throw an exception if the URI is not valid.
-        * Obtain a reference to a writable instance of the underlying SQLite database.
-        * Perform a SQL insert operation to insert the data into the database table.
-        * Notify the corresponding content resolver that the database has been modified.
-        * Return the URI of the newly added table row.
-        * */
-
         context?.let {
             when( uriMatcher.match(uri)) {
                 ITEMS_TABLE -> {
                     val id = itemDao.insertRow(Item.fromContentValues(contentValues!!))
                     it.contentResolver.notifyChange(uri, null)
-                    return@let ContentUris.withAppendedId(uri, id)
+                    val contentUrisWithAppendedId = ContentUris.withAppendedId(uri, id)
+                    Log.w("TAG", "Result of withAppendedId is: $contentUrisWithAppendedId")
+                    return@let contentUrisWithAppendedId
                 }
                 ITEMS_TABLE_ROW ->
                     throw IllegalArgumentException("Invalid Uri, can not insert with row ID: $uri")
                 else -> throw IllegalArgumentException("Unknown Uri: $uri")
             }
         }
-        //throw IllegalArgumentException("Failed to insert row into $uri")
 
-        /*context.let {
-            when (uriMatcher.match(uri)) {
-                ITEMS -> {
-                    val id = itemDao.inserttt(Item.fromContentValues(contentValues!!))
-                    it?.contentResolver?.notifyChange(uri, null)
-                    return@let ContentUris.withAppendedId(uri, id)
-                }
-                ITEMS_ID -> throw IllegalArgumentException("Invalid Uri, can insert with ID: $uri")
-                else -> throw IllegalArgumentException("Unknown Uri: $uri")
-            }
-        }*/
+
+        /* This method now needs to be modified to perform the following tasks:
+    * Use the sUriMatcher object to identify the URI type.
+    * Throw an exception if the URI is not valid.
+    * Obtain a reference to a writable instance of the underlying SQLite database.
+    * Perform a SQL insert operation to insert the data into the database table.
+    * Notify the corresponding content resolver that the database has been modified.
+    * Return the URI of the newly added table row.
+    * */
 
         /*if (context != null) {
 
@@ -108,9 +102,21 @@ class ContactsContentProvider : ContentProvider() {
         }*/
 
 
-    override fun delete(uri: Uri, selection: String?, selectionArgs: Array<out String>?): Int {
-
-        /*
+    override fun delete(uri: Uri, selection: String?, selectionArgs: Array<out String>?): Int =
+            if (context != null) {
+                when (uriMatcher.match(uri)) {
+                    ITEMS_TABLE -> itemDao.deleteAll()
+                    ITEMS_TABLE_ROW -> {
+                        val count = itemDao.deleteRowById(ContentUris.parseId(uri))
+                        context!!.contentResolver.notifyChange(uri, null)
+                        count
+                    }
+                    else -> throw IllegalArgumentException("Failed to delete row into $uri")
+                }
+            } else {
+                0
+            }
+    /*
         * A typical delete() method will also perform the following, tasks when called:
         * Use the sUriMatcher to identify the URI type.
         * Throw an exception if the URI is not valid.
@@ -119,24 +125,36 @@ class ContactsContentProvider : ContentProvider() {
         * Notify the content resolver of the database change.
         * Return the number of rows deleted as a result of the operation.
         */
-
-            if (context != null) {
-                val count: Int = ItemRoomDatabase.getDatabase(context!!).itemDao()
+    /*val count: Int = ItemRoomDatabase.getDatabase(context!!).itemDao()
                     .deleteRowById(ContentUris.parseId(uri))
                 context!!.contentResolver.notifyChange(uri, null)
                 Log.d("TAG", "ContentProvider Deleted $count rows")
-                return count // this method returns numbers of rows deleted
-            }
+                return count // this method returns numbers of rows deleted*/
 
-            throw IllegalArgumentException("Failed to delete row into $uri")
-    }
+
 
     override fun update(uri: Uri, contentValues: ContentValues?, selection: String?,
-                        selectionArgs: Array<out String>?): Int {
+                        selectionArgs: Array<out String>?): Int =
+        if (context != null) {
+            when (uriMatcher.match(uri)) {
+                ITEMS_TABLE-> throw IllegalArgumentException("Invalid Uri, cannot update without id: $uri")
+                ITEMS_TABLE_ROW  -> {
+                    val item =Item.fromContentValues(contentValues!!)
+                    item.id = uri.pathSegments[1].toInt()
+                    // equals: item.id = uri.pathSegments.get(1).toInt()
+                    val count = itemDao.updateee(item)
+                    context!!.contentResolver.notifyChange(uri, null)
+                    count
+                }
+                else -> throw IllegalArgumentException("Unknown Uri: $uri")
+            }
+        } else {
+            0
+        }
 
         // The implementation should update all rows matching the selection
         // to set the columns according to the provided values map
-        if (context != null) {
+        /*if (context != null) {
             val count: Int =
                 ItemRoomDatabase.getDatabase(context!!).itemDao().updateee(
                     Item.fromContentValues(contentValues!!)
@@ -145,24 +163,39 @@ class ContactsContentProvider : ContentProvider() {
             Log.d("TAG", "ContentProvider Updated $count rows")
             return count // this method returns rows been updated
         }
-        throw IllegalArgumentException("Failed to update row into $uri")
-    }
+        throw IllegalArgumentException("Failed to update row into $uri")*/
+
 
     override fun query(uri: Uri, projection: Array<out String>?, selection: String?,
-        selectionArgs: Array<out String>?, sortOrder: String?): Cursor? {
-
-        if (context != null) {
-            val userId = ContentUris.parseId(uri)
-            val cursor = ItemRoomDatabase.getDatabase(context!!).itemDao()
-                .getItemsById(userId)
-            cursor.setNotificationUri(context!!.contentResolver, uri)
-            Log.d("TAG", "ContentProvider Query result $cursor")
-            return cursor
+        selectionArgs: Array<out String>?, sortOrder: String?): Cursor? =
+        context?.let {
+            when (uriMatcher.match(uri)) {
+                ITEMS_TABLE -> {
+                    itemDao.getAllItem()
+                }
+                ITEMS_TABLE_ROW -> {
+                    itemDao.getItemsById(ContentUris.parseId(uri))
+                }
+                else -> throw IllegalArgumentException("Unkonwn Uri: $uri")
+            }
         }
-        throw IllegalArgumentException("Failed to query row for uri $uri")
-    }
+        /*        if (context != null) {
+                    val userId = ContentUris.parseId(uri)
+                    val cursor = ItemRoomDatabase.getDatabase(context!!).itemDao()
+                        .getItemsById(userId)
+                    cursor.setNotificationUri(context!!.contentResolver, uri)
+                    Log.d("TAG", "ContentProvider Query result $cursor")
+                    return cursor
+                }
+                throw IllegalArgumentException("Failed to query row for uri $uri")*/
 
-    override fun getType(uri: Uri): String? {
+    override fun getType(uri: Uri): String =
+        when (uriMatcher.match(uri)) {
+            // the return value will indicate multiple rows (.dir/)
+            ITEMS_TABLE -> "vnd.android.cursor.dir/$AUTHORITY.item"
+            ITEMS_TABLE_ROW -> "vdn.android.cursor.item/$AUTHORITY.item"
+            else -> throw IllegalArgumentException("Unsupported URI: $uri")
+        }
 
         /* this method returns the MIME type of the data
         * for example:
@@ -173,67 +206,4 @@ class ContactsContentProvider : ContentProvider() {
         * If the MIME type of represents single rows in "item" table,
         * its result will be (.item): vnd.android.cursor.item/vnd.com.example.provider.item
         * source: https://developer.android.com/guide/topics/providers/content-provider-creating#TableMIMETypes */
-
-        // last edited code: return "vnd.android.cursor.item/" + Companion.AUTHORITY + "." + Companion.DB_NAME
-        return when (uriMatcher.match(uri)) {
-            // the return value will indicate multiple rows (.dir/)
-            ITEMS_TABLE -> "vnd.android.cursor.dir/item"
-            else -> throw IllegalArgumentException("Unsupported URI: $uri")
-        }
-    }
-
-
-    /*override fun query(
-    uri: Uri,
-    projection: Array<String?>?,
-    selection: String?,
-    selectionArgs: Array<String?>?,
-    sortOrder: String?
-): Cursor? {
-    if (context != null) {
-        val userId = ContentUris.parseId(uri)
-        val cursor: Cursor = SaveMyTripDatabase.getInstance(context).itemDao()
-            .getItemsWithCursor(userId)
-        cursor.setNotificationUri(context!!.contentResolver, uri)
-        return cursor
-    }
-    throw IllegalArgumentException("Failed to query row for uri $uri")
-}*/
-
-    /*override fun getType(uri: Uri): String? {
-        return "vnd.android.cursor.item/" + Companion.AUTHORITY + "." + Companion.TABLE_NAME
-    }*/
-
-    /*override fun delete(
-        uri: Uri,
-        s: String?,
-        strings: Array<String?>?
-    ): Int {
-        if (context != null) {
-            val count: Int = SaveMyTripDatabase.getInstance(context).itemDao()
-                .deleteItem(ContentUris.parseId(uri))
-            context!!.contentResolver.notifyChange(uri, null)
-            return count
-        }
-        throw IllegalArgumentException("Failed to delete row into $uri")
-    }*/
-
-    /*override fun update(
-        uri: Uri,
-        contentValues: ContentValues?,
-        s: String?,
-        strings: Array<String?>?
-    ): Int {
-        if (context != null) {
-            val count: Int =
-                SaveMyTripDatabase.getInstance(context).itemDao().updateItem(
-                    Item.fromContentValues(
-                        contentValues!!
-                    )
-                )
-            context!!.contentResolver.notifyChange(uri, null)
-            return count
-        }
-        throw IllegalArgumentException("Failed to update row into $uri")
-    }*/
 }
